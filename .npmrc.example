@@ -1,0 +1,73 @@
+# NPM Configuration for Corporate Intranet Environments
+# Copy this file to .npmrc and configure for your environment
+
+# ==============================================================================
+# OPTION 1: Corporate NPM Registry (Artifactory/Nexus/Verdaccio)
+# ==============================================================================
+# Uncomment and set your corporate registry URL
+# registry=https://your-corporate-registry.company.com/repository/npm/
+# @your-scope:registry=https://your-corporate-registry.company.com/repository/npm-private/
+
+# ==============================================================================
+# OPTION 2: Corporate Proxy Configuration
+# ==============================================================================
+# If accessing public npm through a corporate proxy:
+# proxy=http://proxy.company.com:8080
+# https-proxy=http://proxy.company.com:8080
+# noproxy=localhost,127.0.0.1,.company.com
+
+# ==============================================================================
+# OPTION 3: Offline Mode (using local cache)
+# ==============================================================================
+# Use cached packages only, don't fetch from network
+# prefer-offline=true
+# Use only cached packages, fail if not in cache
+# offline=true
+
+# ==============================================================================
+# Authentication (if required by corporate registry)
+# ==============================================================================
+# Using Auth Token:
+# //your-corporate-registry.company.com/repository/npm/:_authToken=YOUR_TOKEN
+
+# Using Basic Auth (Base64 encoded username:password):
+# //your-corporate-registry.company.com/repository/npm/:_auth=BASE64_STRING
+# //your-corporate-registry.company.com/repository/npm/:always-auth=true
+
+# ==============================================================================
+# Security and Certificate Settings
+# ==============================================================================
+# If using self-signed certificates (NOT RECOMMENDED for production)
+# strict-ssl=false
+
+# Use custom CA certificate
+# cafile=/path/to/corporate-ca-certificate.crt
+
+# ==============================================================================
+# Performance and Reliability Settings
+# ==============================================================================
+# Fetch retries for flaky corporate networks
+fetch-retries=5
+fetch-retry-mintimeout=20000
+fetch-retry-maxtimeout=120000
+
+# Network timeout (milliseconds)
+timeout=300000
+
+# Use package-lock.json for deterministic installs
+package-lock=true
+
+# Audit level (set to 'none' if audit endpoint is blocked)
+# audit-level=moderate
+
+# ==============================================================================
+# Recommended Settings for Corporate Environments
+# ==============================================================================
+# Save exact versions (no ^ or ~ in package.json)
+save-exact=false
+
+# Engine strict mode (enforce Node.js version from package.json)
+engine-strict=true
+
+# Update notifier disabled (if external checks are blocked)
+update-notifier=false
