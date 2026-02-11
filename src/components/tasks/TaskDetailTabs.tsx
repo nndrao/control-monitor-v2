@@ -1,15 +1,13 @@
 /**
- * TaskDetailTabs Component
+ * TaskDetailTabs — Underline Tab Navigation
  *
- * Consistent tab styling with text-label (12px) typography.
- * Underline-style tabs with h-3.5 w-3.5 icons.
- * Count badges use text-caption.
+ * Clean underline-style tabs for quick section switching.
+ * Clear visual separation between navigation and content.
+ * Dashboard tab uses flex layout for AG Grid compatibility.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   BookOpen,
   BarChart3,
@@ -33,6 +31,13 @@ interface TaskDetailTabsProps {
   gridTheme: Theme
 }
 
+interface TabConfig {
+  id: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  count?: number
+}
+
 export function TaskDetailTabs({
   task,
   taskDetails,
@@ -40,143 +45,102 @@ export function TaskDetailTabs({
   gridTheme,
 }: TaskDetailTabsProps) {
   const showDashboard = task.controlType === 'Supervisor Dashboard Signoff'
-  const firstTab = showDashboard ? 'dashboard' : 'overview'
-  const [activeTab, setActiveTab] = useState(firstTab)
-
-  useEffect(() => {
-    setActiveTab(firstTab)
-  }, [task.id, firstTab])
 
   const noteCount = taskDetails?.notes?.length ?? 0
   const fileCount = taskDetails?.files?.length ?? 0
   const additionalInfoCount = taskDetails?.additionalInfo?.length ?? 0
 
-  const tabs = useMemo(
-    () => {
-      const tabConfig: Array<{
-        value: string
-        label: string
-        icon: typeof BookOpen
-        show: boolean
-        count?: number
-      }> = []
+  const tabs = useMemo<TabConfig[]>(() => {
+    const t: TabConfig[] = []
+    if (showDashboard) {
+      t.push({ id: 'dashboard', label: 'Dashboard', icon: BarChart3 })
+    }
+    t.push({ id: 'overview', label: 'Overview', icon: BookOpen })
+    t.push({ id: 'notes', label: 'Notes', icon: MessageSquare, count: noteCount })
+    t.push({ id: 'files', label: 'Files', icon: Paperclip, count: fileCount })
+    if (additionalInfoCount > 0) {
+      t.push({ id: 'info', label: 'Info', icon: Database, count: additionalInfoCount })
+    }
+    return t
+  }, [showDashboard, noteCount, fileCount, additionalInfoCount])
 
-      if (showDashboard) {
-        tabConfig.push({
-          value: 'dashboard',
-          label: 'Dashboard',
-          icon: BarChart3,
-          show: true,
-        })
-      }
-
-      tabConfig.push({
-        value: 'overview',
-        label: 'Overview',
-        icon: BookOpen,
-        show: true,
-      })
-
-      tabConfig.push({
-        value: 'notes',
-        label: 'Notes',
-        icon: MessageSquare,
-        count: noteCount,
-        show: true,
-      })
-
-      tabConfig.push({
-        value: 'files',
-        label: 'Files',
-        icon: Paperclip,
-        count: fileCount,
-        show: true,
-      })
-
-      if (additionalInfoCount > 0) {
-        tabConfig.push({
-          value: 'info',
-          label: 'Info',
-          icon: Database,
-          count: additionalInfoCount,
-          show: true,
-        })
-      }
-
-      return tabConfig
-    },
-    [showDashboard, noteCount, fileCount, additionalInfoCount]
-  )
+  const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? 'overview')
 
   return (
     <div className="h-full flex flex-col">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-        {/* Tab List — consistent underline tabs with text-label */}
-        <TabsList className="flex bg-transparent border-b border-border !px-5 !py-0 h-9 gap-4 rounded-none w-full justify-start">
+      {/* Tab Bar — underline style */}
+      <div className="flex-shrink-0 px-4 border-b border-border">
+        <div className="flex items-center gap-0.5 -mb-px">
           {tabs.map((tab) => {
             const Icon = tab.icon
+            const isActive = activeTab === tab.id
             return (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'text-label font-medium',
-                  'border-b-2 border-transparent',
-                  'text-muted-foreground',
-                  'rounded-none px-0 py-2.5',
-                  'data-[state=active]:border-foreground data-[state=active]:text-foreground',
-                  'data-[state=active]:bg-transparent data-[state=active]:shadow-none',
-                  'hover:text-foreground transition-colors',
-                  'flex items-center gap-1.5'
+                  'flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors relative',
+                  isActive
+                    ? 'text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
               >
-                <Icon className="h-3.5 w-3.5" />
-                {tab.label}
+                <Icon className={cn('h-3.5 w-3.5 flex-shrink-0', isActive && 'text-primary')} />
+                <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="ml-0.5 text-caption font-semibold text-muted-foreground">
-                    ({tab.count})
+                  <span className="text-[9px] font-semibold bg-muted text-muted-foreground rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 tabular-nums">
+                    {tab.count}
                   </span>
                 )}
-              </TabsTrigger>
+                {/* Active underline */}
+                {isActive && (
+                  <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-primary rounded-full" />
+                )}
+              </button>
             )
           })}
-        </TabsList>
+        </div>
+      </div>
 
-        {/* Dashboard Tab — outside ScrollArea for flex-fill */}
-        {showDashboard && (
-          <TabsContent value="dashboard" className="m-0 px-3 py-2 flex-1 min-h-0 flex flex-col data-[state=inactive]:hidden">
+      {/* Tab Content — fills remaining space */}
+      <div className="flex-1 min-h-0 bg-muted/5">
+        {activeTab === 'dashboard' && showDashboard && (
+          <div className="h-full flex flex-col">
             <DashboardTab task={task} gridTheme={gridTheme} />
-          </TabsContent>
+          </div>
         )}
 
-        {/* Other Tab Content — scrollable with custom scrollbar */}
-        <ScrollArea className={cn("flex-1 scrollbar-thin", activeTab === 'dashboard' && "hidden")}>
-          <TabsContent value="overview" className="m-0 px-5 py-4">
+        {activeTab === 'overview' && (
+          <div className="h-full overflow-y-auto scrollbar-thin px-5 py-4">
             <OverviewTab
               task={task}
               taskDetails={taskDetails}
               instructions={instructions}
             />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="notes" className="m-0 px-5 py-4">
+        {activeTab === 'notes' && (
+          <div className="h-full overflow-y-auto scrollbar-thin px-5 py-4">
             <NotesTab notes={taskDetails?.notes ?? []} />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="files" className="m-0 px-5 py-4">
+        {activeTab === 'files' && (
+          <div className="h-full overflow-y-auto scrollbar-thin px-5 py-4">
             <FilesTab files={taskDetails?.files ?? []} />
-          </TabsContent>
+          </div>
+        )}
 
-          {additionalInfoCount > 0 && (
-            <TabsContent value="info" className="m-0 px-5 py-4">
-              <AdditionalInfoTab
-                data={taskDetails?.additionalInfo ?? []}
-                gridTheme={gridTheme}
-              />
-            </TabsContent>
-          )}
-        </ScrollArea>
-      </Tabs>
+        {activeTab === 'info' && additionalInfoCount > 0 && (
+          <div className="h-full overflow-y-auto scrollbar-thin px-5 py-4">
+            <AdditionalInfoTab
+              data={taskDetails?.additionalInfo ?? []}
+              gridTheme={gridTheme}
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

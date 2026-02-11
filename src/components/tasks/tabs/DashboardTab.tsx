@@ -1,16 +1,20 @@
 /**
  * DashboardTab Component
  *
- * Fixed icon sizes: h-3.5 w-3.5 (not size={11}).
- * Consistent tab styling with text-label.
- * Consistent spacing patterns.
+ * Two clear zones:
+ * 1. Toolbar — summary metrics + view mode toggle in a single contained bar
+ * 2. Content — grid (with pivot selector) or offender analysis, fills remaining space
  */
 
 import { useState, useMemo, useCallback } from 'react'
 import { AgGridReact } from 'ag-grid-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Users,
   Target,
@@ -21,7 +25,6 @@ import {
   BarChart3,
 } from 'lucide-react'
 
-import { SummaryCards } from '@/components/dashboard/SummaryCards'
 import { OffenderAnalysisCard } from '@/components/dashboard/OffenderAnalysisCard'
 import {
   generateMetricsColumnDefs,
@@ -40,6 +43,7 @@ import type { Task } from '@/hooks/useTaskData'
 import type { Theme } from 'ag-grid-community'
 import { useAppContext } from '@/contexts/AppContext'
 import { getAgGridTheme } from '@/themes/agGridTheme'
+import { Card } from '@/components/ui/card'
 
 interface DashboardTabProps {
   task: Task
@@ -50,15 +54,16 @@ interface DashboardTabProps {
 }
 
 type PivotMode = 'employees' | 'metrics' | 'region' | 'legal' | 'business'
+type ViewMode = 'drilldown' | 'offenders'
 
-interface TabConfig {
+interface PivotConfig {
   id: PivotMode
   name: string
   icon: React.ComponentType<{ className?: string }>
   groupField: string
 }
 
-const TABS: TabConfig[] = [
+const PIVOTS: PivotConfig[] = [
   { id: 'employees', name: 'Employees', icon: Users, groupField: 'employeeName' },
   { id: 'metrics', name: 'Metrics', icon: Target, groupField: 'metricName' },
   { id: 'region', name: 'Region', icon: MapPin, groupField: 'region' },
@@ -96,7 +101,8 @@ export function DashboardTab({
 }: DashboardTabProps) {
   const { theme } = useAppContext()
   const agGridTheme = getAgGridTheme(theme)
-  const [activeTab, setActiveTab] = useState<PivotMode>('employees')
+  const [activePivot, setActivePivot] = useState<PivotMode>('employees')
+  const [viewMode, setViewMode] = useState<ViewMode>('drilldown')
 
   const data = useMemo(() => {
     if (externalData) return externalData
@@ -111,19 +117,19 @@ export function DashboardTab({
 
   const columnDefs = useMemo(() => {
     const options = {
-      groupByEmployee: activeTab === 'employees',
-      groupByMetric: activeTab === 'metrics',
-      groupByRegion: activeTab === 'region',
-      groupByLegalEntity: activeTab === 'legal',
-      groupByBusiness: activeTab === 'business',
+      groupByEmployee: activePivot === 'employees',
+      groupByMetric: activePivot === 'metrics',
+      groupByRegion: activePivot === 'region',
+      groupByLegalEntity: activePivot === 'legal',
+      groupByBusiness: activePivot === 'business',
     }
     return generateMetricsColumnDefs(options)
-  }, [activeTab])
+  }, [activePivot])
 
   const autoGroupColumnDef = useMemo(() => {
-    const tab = TABS.find((t) => t.id === activeTab)
-    return getAutoGroupColumnDef(tab?.name || 'Group')
-  }, [activeTab])
+    const pivot = PIVOTS.find((t) => t.id === activePivot)
+    return getAutoGroupColumnDef(pivot?.name || 'Group')
+  }, [activePivot])
 
   const autoSizeStrategy = useMemo(() => ({
     type: 'fitCellContents' as const,
@@ -142,7 +148,7 @@ export function DashboardTab({
 
   if (error) {
     return (
-      <Card className="p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+      <Card className="m-3 p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
         <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
           <AlertTriangle className="h-4 w-4" />
           <span className="text-body">{error}</span>
@@ -151,84 +157,107 @@ export function DashboardTab({
     )
   }
 
+  const metrics = [
+    { value: summaryStats.totalRows, label: 'Emp', dot: 'bg-blue-500' },
+    { value: summaryStats.totalBreaches, label: 'Breach', dot: 'bg-red-500' },
+    { value: summaryStats.totalPotentialBreaches, label: 'Potential', dot: 'bg-amber-500' },
+    { value: summaryStats.currentMonth, label: 'Period', dot: 'bg-emerald-500' },
+  ]
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* Summary Cards */}
-      <div className="flex-shrink-0">
-        <SummaryCards stats={summaryStats} />
+      {/* Toolbar — summary metrics row + view toggle row */}
+      <div className="flex-shrink-0 border-b border-border bg-muted/30 px-4 py-2 space-y-1.5">
+        {/* Row 1: Summary metrics */}
+        <div className="flex items-center gap-3">
+          {metrics.map((m) => (
+            <div key={m.label} className="flex items-center gap-1">
+              <div className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
+              <span className="text-xs font-semibold tabular-nums text-foreground">{m.value}</span>
+              <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wide">{m.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Row 2: View toggle */}
+        <div className="flex">
+          <div className="flex bg-background rounded-md p-0.5 border border-border/50">
+            <button
+              onClick={() => setViewMode('drilldown')}
+              className={`flex items-center gap-1 px-2 h-5 rounded-sm text-[10px] font-medium transition-colors ${
+                viewMode === 'drilldown'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <BarChart3 className="h-2.5 w-2.5" />
+              Drill-Down
+            </button>
+            <button
+              onClick={() => setViewMode('offenders')}
+              className={`flex items-center gap-1 px-2 h-5 rounded-sm text-[10px] font-medium transition-colors ${
+                viewMode === 'offenders'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <AlertTriangle className="h-2.5 w-2.5" />
+              Offenders
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="drilldown" className="flex-1 flex flex-col min-h-0 mt-2.5">
-        <Card className="flex-1 flex flex-col overflow-hidden min-h-0">
-          <div className="px-3 pt-1.5 pb-0 bg-muted/20 border-b border-border flex-shrink-0">
-            <TabsList className="flex h-7 bg-transparent rounded-none w-full justify-start !px-0 !py-0 gap-1">
-              <TabsTrigger
-                value="drilldown"
-                className="text-label font-medium text-muted-foreground gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none h-7 px-2.5"
-              >
-                <BarChart3 className="h-3.5 w-3.5" />
-                Monthly Drill-Down
-              </TabsTrigger>
-              <TabsTrigger
-                value="offenders"
-                className="text-label font-medium text-muted-foreground gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none h-7 px-2.5"
-              >
-                <AlertTriangle className="h-3.5 w-3.5" />
-                Offender Analysis
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          {/* Monthly Drill-Down Tab */}
-          <TabsContent value="drilldown" className="m-0 flex-1 flex flex-col min-h-0 data-[state=inactive]:hidden">
-            <div className="p-3 border-b border-border flex-shrink-0">
-              <div className="flex gap-2 flex-wrap">
-                {TABS.map((tab) => {
-                  const Icon = tab.icon
-                  const isActive = activeTab === tab.id
+      {/* Content zone */}
+      {viewMode === 'drilldown' ? (
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Pivot selector row */}
+          <div className="flex items-center px-4 py-1.5 flex-shrink-0">
+            <Select value={activePivot} onValueChange={(v) => setActivePivot(v as PivotMode)}>
+              <SelectTrigger className="h-7 w-[140px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PIVOTS.map((pivot) => {
+                  const Icon = pivot.icon
                   return (
-                    <Button
-                      key={tab.id}
-                      variant={isActive ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setActiveTab(tab.id)}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span>{tab.name}</span>
-                    </Button>
+                    <SelectItem key={pivot.id} value={pivot.id} className="text-xs">
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                        <span>{pivot.name}</span>
+                      </div>
+                    </SelectItem>
                   )
                 })}
-              </div>
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Grid */}
+          <div className="flex-1 min-h-0 relative">
+            <div className="absolute inset-0">
+              <AgGridReact
+                theme={agGridTheme}
+                rowData={data}
+                columnDefs={columnDefs}
+                defaultColDef={defaultColDef}
+                autoGroupColumnDef={autoGroupColumnDef}
+                autoSizeStrategy={autoSizeStrategy}
+                animateRows={true}
+                suppressRowClickSelection={true}
+                groupDefaultExpanded={0}
+                onGridReady={onGridReady}
+                components={{
+                  trendCellRenderer: TrendCellRenderer,
+                }}
+              />
             </div>
-
-            <div className="flex-1 min-h-0 relative">
-              <div className="absolute inset-0">
-                <AgGridReact
-                  theme={agGridTheme}
-                  rowData={data}
-                  columnDefs={columnDefs}
-                  defaultColDef={defaultColDef}
-                  autoGroupColumnDef={autoGroupColumnDef}
-                  autoSizeStrategy={autoSizeStrategy}
-                  animateRows={true}
-                  suppressRowClickSelection={true}
-                  groupDefaultExpanded={0}
-                  onGridReady={onGridReady}
-                  components={{
-                    trendCellRenderer: TrendCellRenderer,
-                  }}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Offender Analysis Tab */}
-          <TabsContent value="offenders" className="m-0 flex-1 flex flex-col min-h-0 data-[state=inactive]:hidden">
-            <OffenderAnalysisCard metricsData={data} />
-          </TabsContent>
-        </Card>
-      </Tabs>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <OffenderAnalysisCard metricsData={data} />
+        </div>
+      )}
     </div>
   )
 }
