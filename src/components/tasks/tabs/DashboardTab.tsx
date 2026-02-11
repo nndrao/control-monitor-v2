@@ -1,11 +1,9 @@
 /**
  * DashboardTab Component
  *
- * Full metrics dashboard for tasks with controlType = "Supervisor Dashboard Signoff".
- * Features:
- * - Summary cards (Employees, Breaches, Potential, Period)
- * - Monthly drill-down AG Grid with 5 pivot modes
- * - Offender analysis with By Metric / By Employee toggle
+ * Fixed icon sizes: h-3.5 w-3.5 (not size={11}).
+ * Consistent tab styling with text-label.
+ * Consistent spacing patterns.
  */
 
 import { useState, useMemo, useCallback } from 'react'
@@ -43,10 +41,6 @@ import type { Theme } from 'ag-grid-community'
 import { useAppContext } from '@/contexts/AppContext'
 import { getAgGridTheme } from '@/themes/agGridTheme'
 
-// =============================================================================
-// TYPES
-// =============================================================================
-
 interface DashboardTabProps {
   task: Task
   gridTheme: Theme
@@ -60,13 +54,9 @@ type PivotMode = 'employees' | 'metrics' | 'region' | 'legal' | 'business'
 interface TabConfig {
   id: PivotMode
   name: string
-  icon: React.ComponentType<{ className?: string; size?: string | number }>
+  icon: React.ComponentType<{ className?: string }>
   groupField: string
 }
-
-// =============================================================================
-// CONSTANTS
-// =============================================================================
 
 const TABS: TabConfig[] = [
   { id: 'employees', name: 'Employees', icon: Users, groupField: 'employeeName' },
@@ -76,12 +66,7 @@ const TABS: TabConfig[] = [
   { id: 'business', name: 'Business', icon: Briefcase, groupField: 'business' },
 ]
 
-// =============================================================================
-// CUSTOM CELL RENDERERS
-// =============================================================================
-
 const TrendCellRenderer = (params: { value: number }) => {
-  // Explicitly normalize -0 to 0
   const value = Object.is(params.value, -0) ? 0 : params.value
 
   if (value > 0) {
@@ -103,10 +88,6 @@ const TrendCellRenderer = (params: { value: number }) => {
   return <div className="text-muted-foreground">0</div>
 }
 
-// =============================================================================
-// MAIN COMPONENT
-// =============================================================================
-
 export function DashboardTab({
   task,
   metricsData: externalData,
@@ -115,15 +96,10 @@ export function DashboardTab({
 }: DashboardTabProps) {
   const { theme } = useAppContext()
   const agGridTheme = getAgGridTheme(theme)
-
-  // State
   const [activeTab, setActiveTab] = useState<PivotMode>('employees')
 
-  // Generate or use external data
   const data = useMemo(() => {
     if (externalData) return externalData
-
-    // Generate mock data with task-specific seed
     const seed = task.id
       ? String(task.id).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
       : undefined
@@ -131,10 +107,8 @@ export function DashboardTab({
     return transformMetricScoringData(rawData)
   }, [externalData, task.id])
 
-  // Calculate summary stats
   const summaryStats = useMemo(() => calculateSummaryStats(data), [data])
 
-  // Column definitions based on active tab
   const columnDefs = useMemo(() => {
     const options = {
       groupByEmployee: activeTab === 'employees',
@@ -146,26 +120,18 @@ export function DashboardTab({
     return generateMetricsColumnDefs(options)
   }, [activeTab])
 
-  // Auto group column definition
   const autoGroupColumnDef = useMemo(() => {
     const tab = TABS.find((t) => t.id === activeTab)
     return getAutoGroupColumnDef(tab?.name || 'Group')
   }, [activeTab])
 
-  // Auto-size strategy for columns
-  const autoSizeStrategy = useMemo(() => {
-    return {
-      type: 'fitCellContents' as const,
-      skipHeader: false,
-    }
-  }, [])
+  const autoSizeStrategy = useMemo(() => ({
+    type: 'fitCellContents' as const,
+    skipHeader: false,
+  }), [])
 
-  // Grid ready handler
-  const onGridReady = useCallback(() => {
-    // Grid initialization if needed
-  }, [])
+  const onGridReady = useCallback(() => {}, [])
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -174,13 +140,12 @@ export function DashboardTab({
     )
   }
 
-  // Error state
   if (error) {
     return (
-      <Card className="p-6 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+      <Card className="p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
         <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-          <AlertTriangle size={20} />
-          <span>{error}</span>
+          <AlertTriangle className="h-4 w-4" />
+          <span className="text-body">{error}</span>
         </div>
       </Card>
     )
@@ -193,23 +158,23 @@ export function DashboardTab({
         <SummaryCards stats={summaryStats} />
       </div>
 
-      {/* Main Content Tabs — fills remaining space */}
+      {/* Main Content Tabs */}
       <Tabs defaultValue="drilldown" className="flex-1 flex flex-col min-h-0 mt-2.5">
         <Card className="flex-1 flex flex-col overflow-hidden min-h-0">
-          <div className="px-3 pt-1.5 pb-0 bg-muted/20 border-b border-border/50 flex-shrink-0">
+          <div className="px-3 pt-1.5 pb-0 bg-muted/20 border-b border-border flex-shrink-0">
             <TabsList className="flex h-7 bg-transparent rounded-none w-full justify-start !px-0 !py-0 gap-1">
               <TabsTrigger
                 value="drilldown"
-                className="text-[11px] font-medium text-muted-foreground gap-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none h-7 px-2.5"
+                className="text-label font-medium text-muted-foreground gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none h-7 px-2.5"
               >
-                <BarChart3 size={11} />
+                <BarChart3 className="h-3.5 w-3.5" />
                 Monthly Drill-Down
               </TabsTrigger>
               <TabsTrigger
                 value="offenders"
-                className="text-[11px] font-medium text-muted-foreground gap-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none h-7 px-2.5"
+                className="text-label font-medium text-muted-foreground gap-1.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none h-7 px-2.5"
               >
-                <AlertTriangle size={11} />
+                <AlertTriangle className="h-3.5 w-3.5" />
                 Offender Analysis
               </TabsTrigger>
             </TabsList>
@@ -218,12 +183,10 @@ export function DashboardTab({
           {/* Monthly Drill-Down Tab */}
           <TabsContent value="drilldown" className="m-0 flex-1 flex flex-col min-h-0 data-[state=inactive]:hidden">
             <div className="p-3 border-b border-border flex-shrink-0">
-              {/* Pivot Mode Buttons */}
               <div className="flex gap-2 flex-wrap">
                 {TABS.map((tab) => {
                   const Icon = tab.icon
                   const isActive = activeTab === tab.id
-
                   return (
                     <Button
                       key={tab.id}
@@ -231,7 +194,7 @@ export function DashboardTab({
                       size="sm"
                       onClick={() => setActiveTab(tab.id)}
                     >
-                      <Icon size={14} />
+                      <Icon className="h-3.5 w-3.5" />
                       <span>{tab.name}</span>
                     </Button>
                   )
@@ -239,7 +202,6 @@ export function DashboardTab({
               </div>
             </div>
 
-            {/* AG Grid — fills remaining space */}
             <div className="flex-1 min-h-0 relative">
               <div className="absolute inset-0">
                 <AgGridReact

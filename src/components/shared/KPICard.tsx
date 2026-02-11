@@ -4,10 +4,9 @@
  * Clean, minimal card for displaying key performance indicators.
  * Features:
  * - Subtle left accent bar (4px) for visual hierarchy
- * - Uppercase, small label with tracking-wider for elegant typography
- * - Large, bold value display
+ * - Consistent typography tokens
  * - Optional trend indicator with directional arrow
- * - Smooth hover transitions
+ * - Standardized hover-card pattern
  * - Dark mode support
  */
 
@@ -58,15 +57,14 @@ export function KPICard({
   return (
     <Card
       className={cn(
-        'border-l-4 rounded-none rounded-r-lg transition-all duration-200',
-        'hover:shadow-sm hover:bg-muted/30',
+        'border-l-4 rounded-none rounded-r-lg hover-card',
         accentClass,
         className
       )}
     >
       <CardContent className="p-4 space-y-3">
         {/* Label */}
-        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <div className="section-label">
           {label}
         </div>
 
@@ -77,7 +75,7 @@ export function KPICard({
           </div>
 
           {trend && (
-            <div className={cn('flex items-center gap-1 text-xs font-medium', trendColor)}>
+            <div className={cn('flex items-center gap-1 text-label font-medium', trendColor)}>
               {trend.direction === 'up' ? (
                 <TrendingUp className="h-3.5 w-3.5" />
               ) : (

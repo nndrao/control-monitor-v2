@@ -1,9 +1,8 @@
 /**
  * FilesTab Component
  *
- * Display task files in a clean list with icons, names, and metadata.
- * File types are color-coded (PDF red, Excel green, images blue, etc).
- * Hover effects for interactivity without being intrusive.
+ * Enhanced empty state with icon and CTA.
+ * Consistent typography tokens and hover patterns.
  */
 
 import { memo } from 'react'
@@ -14,6 +13,7 @@ import {
   FileImage,
   File,
   Mail,
+  Paperclip,
 } from 'lucide-react'
 import type { TaskFile } from '@/types/task-details.types'
 
@@ -22,13 +22,9 @@ interface FilesTabProps {
   className?: string
 }
 
-/**
- * File type icon mapping
- */
 const FILE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   'application/pdf': FileText,
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-    FileSpreadsheet,
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': FileSpreadsheet,
   'application/vnd.ms-excel': FileSpreadsheet,
   'text/csv': FileSpreadsheet,
   'image/png': FileImage,
@@ -39,13 +35,9 @@ const FILE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   'message/rfc822': Mail,
 }
 
-/**
- * File type color mapping
- */
 const FILE_COLORS: Record<string, string> = {
   'application/pdf': 'text-red-500',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-    'text-green-600',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'text-green-600',
   'application/vnd.ms-excel': 'text-green-600',
   'text/csv': 'text-green-600',
   'image/png': 'text-blue-500',
@@ -55,23 +47,14 @@ const FILE_COLORS: Record<string, string> = {
   'application/vnd.ms-outlook': 'text-blue-600',
 }
 
-/**
- * Get appropriate icon for file type
- */
 function getFileIcon(type: string) {
   return FILE_ICONS[type] || File
 }
 
-/**
- * Get appropriate color for file type
- */
 function getFileColor(type: string) {
   return FILE_COLORS[type] || 'text-muted-foreground'
 }
 
-/**
- * Format file size for display
- */
 function formatFileSize(sizeInBytes: number): string {
   if (sizeInBytes === 0) return '0 B'
   const k = 1024
@@ -81,9 +64,6 @@ function formatFileSize(sizeInBytes: number): string {
   return `${value} ${sizes[i]}`
 }
 
-/**
- * Format date for display
- */
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
   try {
@@ -98,9 +78,6 @@ function formatDate(dateStr: string): string {
   }
 }
 
-/**
- * File Item Component
- */
 const FileItem = memo(function FileItem({ file }: { file: TaskFile }) {
   const Icon = getFileIcon(file.type)
   const iconColor = getFileColor(file.type)
@@ -108,7 +85,6 @@ const FileItem = memo(function FileItem({ file }: { file: TaskFile }) {
   const handleDownload = (e: React.MouseEvent) => {
     e.preventDefault()
     console.log('Download file:', file.name, file.id)
-    // TODO: Implement actual file download
   }
 
   return (
@@ -116,17 +92,15 @@ const FileItem = memo(function FileItem({ file }: { file: TaskFile }) {
       onClick={handleDownload}
       className={cn(
         'w-full flex items-start gap-3 px-3 py-2.5 rounded-md text-left',
-        'hover:bg-muted/30 transition-colors duration-150'
+        'hover-list-item'
       )}
     >
-      <Icon
-        className={cn('h-4 w-4 flex-shrink-0 mt-0.5', iconColor)}
-      />
+      <Icon className={cn('h-4 w-4 flex-shrink-0 mt-0.5', iconColor)} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate hover:underline">
+        <p className="text-body font-medium text-foreground truncate hover:underline">
           {file.name}
         </p>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-caption text-muted-foreground">
           <span>{formatFileSize(file.size)}</span>
           <span className="text-border">·</span>
           <span>{file.uploadedBy}</span>
@@ -144,8 +118,14 @@ export const FilesTab = memo(function FilesTab({
 }: FilesTabProps) {
   if (!files || files.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-sm text-muted-foreground">No files attached</p>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+          <Paperclip className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <p className="text-body font-medium text-foreground">No files attached</p>
+        <p className="text-caption text-muted-foreground mt-1">
+          File attachments will appear here
+        </p>
       </div>
     )
   }

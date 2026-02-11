@@ -1,14 +1,14 @@
 /**
  * NotesTab Component
  *
- * Display task notes in a clean Notion-like list.
- * Each note shows author avatar, name, timestamp, and content.
- * Generous spacing between notes for a breathable layout.
+ * Enhanced empty state with icon and CTA.
+ * Consistent typography tokens and border styling.
  */
 
 import { memo } from 'react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { MessageSquare } from 'lucide-react'
 import type { TaskNote } from '@/types/task-details.types'
 
 interface NotesTabProps {
@@ -27,9 +27,6 @@ const AVATAR_COLORS = [
   'bg-indigo-500',
 ]
 
-/**
- * Consistent avatar color based on author name
- */
 function getAvatarColor(name: string): string {
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -38,9 +35,6 @@ function getAvatarColor(name: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
-/**
- * Format timestamp for display
- */
 function formatTimestamp(timestamp: string): string {
   if (!timestamp) return ''
   try {
@@ -66,9 +60,6 @@ function formatTimestamp(timestamp: string): string {
   }
 }
 
-/**
- * Note Item Component
- */
 const NoteItem = memo(function NoteItem({ note }: { note: TaskNote }) {
   const avatarColor = getAvatarColor(note.author)
 
@@ -76,21 +67,21 @@ const NoteItem = memo(function NoteItem({ note }: { note: TaskNote }) {
     <div className="flex gap-3">
       <Avatar className="h-8 w-8 flex-shrink-0 mt-0.5">
         <AvatarFallback
-          className={cn('text-[10px] font-medium text-white', avatarColor)}
+          className={cn('text-caption font-medium text-white', avatarColor)}
         >
           {note.avatar}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-body font-medium text-foreground">
             {note.author}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-caption text-muted-foreground">
             {formatTimestamp(note.timestamp)}
           </span>
         </div>
-        <p className="text-sm text-foreground leading-relaxed mt-1">
+        <p className="text-body text-foreground leading-relaxed mt-1">
           {note.content}
         </p>
       </div>
@@ -104,18 +95,24 @@ export const NotesTab = memo(function NotesTab({
 }: NotesTabProps) {
   if (!notes || notes.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-sm text-muted-foreground">No notes yet</p>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+          <MessageSquare className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <p className="text-body font-medium text-foreground">No notes yet</p>
+        <p className="text-caption text-muted-foreground mt-1">
+          Notes and comments will appear here
+        </p>
       </div>
     )
   }
 
   return (
     <div className={cn('space-y-4', className)}>
-      {notes.map((note) => (
+      {notes.map((note, idx) => (
         <div key={note.id}>
           <NoteItem note={note} />
-          {note !== notes[notes.length - 1] && (
+          {idx < notes.length - 1 && (
             <div className="mt-4 border-b border-border/50" />
           )}
         </div>

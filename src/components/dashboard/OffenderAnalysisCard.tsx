@@ -3,6 +3,7 @@
  *
  * Shows repeat offenders grouped by metric or by employee.
  * Uses AG Grid with toggleable view modes.
+ * Consistent typography tokens and border styling.
  */
 
 import { useMemo, useState } from 'react'
@@ -64,8 +65,8 @@ export const OffenderAnalysisCard: React.FC<OffenderAnalysisCardProps> = ({
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border flex-shrink-0">
-        <p className="text-xs text-muted-foreground">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border flex-shrink-0">
+        <p className="text-caption text-muted-foreground">
           View repeat offenders grouped by metric or employee
         </p>
 
@@ -103,9 +104,9 @@ export const OffenderAnalysisCard: React.FC<OffenderAnalysisCardProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 border-t border-border bg-muted/30 flex-shrink-0">
+      <div className="px-3 py-2 border-t border-border bg-muted/30 flex-shrink-0">
         <div className="flex justify-between items-center">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-caption text-muted-foreground">
             Showing{' '}
             <span className="font-medium text-foreground">
               {activeView === 'metric'
@@ -115,8 +116,8 @@ export const OffenderAnalysisCard: React.FC<OffenderAnalysisCardProps> = ({
             {activeView === 'metric' ? 'metrics' : 'employees'}
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Grand Total</span>
-            <Badge variant="destructive" className="h-6 text-sm px-2.5">
+            <span className="text-caption font-medium text-muted-foreground">Grand Total</span>
+            <Badge variant="destructive" className="h-6 text-xs px-2">
               {grandTotal}
             </Badge>
           </div>

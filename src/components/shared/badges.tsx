@@ -1,13 +1,12 @@
 /**
- * Notion-Inspired Badge Components
+ * Badge Components
  *
- * Reusable status, priority, and due status badges with subtle Notion-style color coding.
- * All components are memoized to prevent unnecessary re-renders.
- * Features:
- * - Softer, less saturated colors with 10-15% opacity backgrounds
- * - Subtle design that doesn't overpower the interface
- * - Dark mode support with appropriate color adjustments
- * - Rounded-sm corners for a softer Notion aesthetic
+ * Consistent status, priority, and due status badges.
+ * All badges use the same base styling pattern:
+ * - text-label (12px) for consistent typography
+ * - h-6 (24px) fixed height
+ * - px-2 consistent horizontal padding
+ * - rounded-sm with subtle border
  */
 
 import { memo } from 'react'
@@ -22,6 +21,8 @@ function toTitleCase(str: string): string {
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase())
 }
+
+const badgeBase = 'text-xs px-2 h-6 font-medium rounded-sm border'
 
 /** Status badge with semantic color coding */
 export const StatusBadge = memo(function StatusBadge({ status }: { status: string }) {
@@ -44,10 +45,7 @@ export const StatusBadge = memo(function StatusBadge({ status }: { status: strin
   return (
     <Badge
       variant="outline"
-      className={cn(
-        'text-xs px-2.5 h-6 font-medium rounded-sm border',
-        getStyle(status)
-      )}
+      className={cn(badgeBase, getStyle(status))}
     >
       {toTitleCase(status)}
     </Badge>
@@ -75,10 +73,7 @@ export const PriorityBadge = memo(function PriorityBadge({ priority }: { priorit
   return (
     <Badge
       variant="outline"
-      className={cn(
-        'text-xs px-2.5 h-6 font-medium rounded-sm border',
-        getStyle(priority)
-      )}
+      className={cn(badgeBase, getStyle(priority))}
     >
       {toTitleCase(priority)}
     </Badge>
@@ -105,10 +100,7 @@ export const DueStatusBadge = memo(function DueStatusBadge({ dueStatus }: { dueS
   return (
     <Badge
       variant="outline"
-      className={cn(
-        'text-xs px-2.5 h-6 font-medium rounded-sm border',
-        getStyle(dueStatus)
-      )}
+      className={cn(badgeBase, getStyle(dueStatus))}
     >
       {toTitleCase(dueStatus)}
     </Badge>

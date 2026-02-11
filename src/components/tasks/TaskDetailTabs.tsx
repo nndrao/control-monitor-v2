@@ -1,15 +1,9 @@
 /**
  * TaskDetailTabs Component
  *
- * Tab navigation + content switcher with Notion-style underline tabs.
- * Uses shadcn Tabs component but customized with underline style (not pill/card).
- *
- * Tabs:
- * 1. "Overview" (default) — Combined Instructions + Details
- * 2. "Dashboard" — Only shown if controlType is "Supervisor Dashboard Signoff"
- * 3. "Notes" — With count badge
- * 4. "Files" — With count badge
- * 5. "Info" — Additional info grid, only if data exists
+ * Consistent tab styling with text-label (12px) typography.
+ * Underline-style tabs with h-3.5 w-3.5 icons.
+ * Count badges use text-caption.
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -49,7 +43,6 @@ export function TaskDetailTabs({
   const firstTab = showDashboard ? 'dashboard' : 'overview'
   const [activeTab, setActiveTab] = useState(firstTab)
 
-  // Reset to first tab whenever the selected task changes
   useEffect(() => {
     setActiveTab(firstTab)
   }, [task.id, firstTab])
@@ -58,7 +51,6 @@ export function TaskDetailTabs({
   const fileCount = taskDetails?.files?.length ?? 0
   const additionalInfoCount = taskDetails?.additionalInfo?.length ?? 0
 
-  // Determine which tabs to show and their configuration
   const tabs = useMemo(
     () => {
       const tabConfig: Array<{
@@ -104,7 +96,7 @@ export function TaskDetailTabs({
       if (additionalInfoCount > 0) {
         tabConfig.push({
           value: 'info',
-          label: 'Additional Information',
+          label: 'Info',
           icon: Database,
           count: additionalInfoCount,
           show: true,
@@ -119,8 +111,8 @@ export function TaskDetailTabs({
   return (
     <div className="h-full flex flex-col">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-        {/* Tab List — Notion-style underline tabs */}
-        <TabsList className="flex bg-transparent border-b border-border !px-6 !py-0 h-9 gap-4 rounded-none w-full justify-start">
+        {/* Tab List — consistent underline tabs with text-label */}
+        <TabsList className="flex bg-transparent border-b border-border !px-5 !py-0 h-9 gap-4 rounded-none w-full justify-start">
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (
@@ -128,7 +120,7 @@ export function TaskDetailTabs({
                 key={tab.value}
                 value={tab.value}
                 className={cn(
-                  'text-xs font-medium',
+                  'text-label font-medium',
                   'border-b-2 border-transparent',
                   'text-muted-foreground',
                   'rounded-none px-0 py-2.5',
@@ -141,7 +133,7 @@ export function TaskDetailTabs({
                 <Icon className="h-3.5 w-3.5" />
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="ml-1 text-[10px] font-semibold text-muted-foreground">
+                  <span className="ml-0.5 text-caption font-semibold text-muted-foreground">
                     ({tab.count})
                   </span>
                 )}
@@ -150,17 +142,16 @@ export function TaskDetailTabs({
           })}
         </TabsList>
 
-        {/* Dashboard Tab — outside ScrollArea so it can flex-fill vertically */}
+        {/* Dashboard Tab — outside ScrollArea for flex-fill */}
         {showDashboard && (
           <TabsContent value="dashboard" className="m-0 px-3 py-2 flex-1 min-h-0 flex flex-col data-[state=inactive]:hidden">
             <DashboardTab task={task} gridTheme={gridTheme} />
           </TabsContent>
         )}
 
-        {/* Other Tab Content — scrollable, hidden when Dashboard is active so it doesn't compete for flex space */}
-        <ScrollArea className={cn("flex-1", activeTab === 'dashboard' && "hidden")}>
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="m-0 px-6 py-4">
+        {/* Other Tab Content — scrollable with custom scrollbar */}
+        <ScrollArea className={cn("flex-1 scrollbar-thin", activeTab === 'dashboard' && "hidden")}>
+          <TabsContent value="overview" className="m-0 px-5 py-4">
             <OverviewTab
               task={task}
               taskDetails={taskDetails}
@@ -168,19 +159,16 @@ export function TaskDetailTabs({
             />
           </TabsContent>
 
-          {/* Notes Tab */}
-          <TabsContent value="notes" className="m-0 px-6 py-4">
+          <TabsContent value="notes" className="m-0 px-5 py-4">
             <NotesTab notes={taskDetails?.notes ?? []} />
           </TabsContent>
 
-          {/* Files Tab */}
-          <TabsContent value="files" className="m-0 px-6 py-4">
+          <TabsContent value="files" className="m-0 px-5 py-4">
             <FilesTab files={taskDetails?.files ?? []} />
           </TabsContent>
 
-          {/* Additional Info Tab (conditional) */}
           {additionalInfoCount > 0 && (
-            <TabsContent value="info" className="m-0 px-6 py-4">
+            <TabsContent value="info" className="m-0 px-5 py-4">
               <AdditionalInfoTab
                 data={taskDetails?.additionalInfo ?? []}
                 gridTheme={gridTheme}

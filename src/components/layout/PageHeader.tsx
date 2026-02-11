@@ -13,7 +13,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ subtitle, leading, center, children }: PageHeaderProps) {
   return (
-    <div className="h-12 px-3 border-b border-border bg-card flex-shrink-0 shadow-[0_1px_3px_0_rgba(0,0,0,0.06)]">
+    <div className="h-12 px-3 border-b border-border bg-card flex-shrink-0 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]">
       <div className="flex items-center h-full gap-3">
         {/* Left zone: leading action + view name */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
@@ -21,26 +21,27 @@ export function PageHeader({ subtitle, leading, center, children }: PageHeaderPr
           {subtitle && (
             <>
               <div className="w-px h-4 bg-border" />
-              <h1 className="text-[13px] font-semibold text-foreground whitespace-nowrap">
+              <h1 className="text-subhead font-semibold text-foreground whitespace-nowrap">
                 {subtitle}
               </h1>
             </>
           )}
         </div>
 
-        {/* Center zone: status chips */}
+        {/* Center zone: status chips — hidden on small screens */}
         {center && (
-          <div className="flex-1 flex items-center justify-center min-w-0">
+          <div className="flex-1 items-center justify-center min-w-0 hidden tablet:flex">
             {center}
           </div>
         )}
 
         {/* Spacer if no center content */}
         {!center && <div className="flex-1" />}
+        {center && <div className="flex-1 tablet:hidden" />}
 
         {/* Right zone: search, buttons, actions */}
         {children && (
-          <div className="flex items-center gap-2.5 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {children}
           </div>
         )}

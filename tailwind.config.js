@@ -10,6 +10,16 @@ export default {
       padding: "1rem",
       screens: { "2xl": "1400px" },
     },
+    screens: {
+      'sm': '640px',
+      'tablet': '768px',      /* iPad portrait */
+      'md': '768px',
+      'desktop': '1024px',    /* iPad landscape / small desktop */
+      'lg': '1024px',
+      'wide': '1440px',       /* Full desktop */
+      'xl': '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       fontFamily: {
         sans: ["-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "Roboto", "'Helvetica Neue'", "Arial", "sans-serif"],

@@ -2,7 +2,7 @@
  * Search Input Component
  *
  * Clean, compact search input for toolbar use.
- * All sizing matches the h-7 (28px) toolbar standard.
+ * Uses consistent h-7 (28px) compact height token.
  */
 
 import { cn } from '@/lib/utils'
@@ -31,7 +31,7 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          'w-full h-7 pl-7 pr-7 text-[11px] rounded-md transition-all',
+          'w-full h-7 pl-7 pr-7 text-label rounded-md transition-all',
           'bg-muted/50 border border-border/50 text-foreground',
           'placeholder:text-muted-foreground/70',
           'hover:border-border',

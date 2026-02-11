@@ -1,23 +1,18 @@
 /**
  * TaskManager Component
  *
- * Main task management view for the Notion-inspired task interface.
- * Features:
- * - Page header with title and subtitle
- * - Inline task filters dropdown
- * - Control hierarchy panel (slide-out overlay)
- * - Status summary bar with task counts
- * - Master-detail split layout: AG Grid (left) + details panel (right)
- * - Resizable details panel with expand/collapse
- *
- * The details panel shares the viewport with the grid (inline flex),
- * not a fixed overlay, so the grid naturally reflows.
+ * Main task management view with:
+ * - Interactive status chip filters
+ * - Density toggle (compact/default/comfortable)
+ * - Grid row visual encoding by due status
+ * - Responsive detail panel (smaller default on tablet)
+ * - Consistent typography and spacing tokens
  */
 
 import { useAppContext } from '@/contexts/AppContext'
 import { useParams, useLocation } from 'react-router-dom'
 import { AgGridReact } from 'ag-grid-react'
-import type { RowClickedEvent } from 'ag-grid-community'
+import type { RowClickedEvent, IsExternalFilterPresentParams, RowClassParams } from 'ag-grid-community'
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { AllEnterpriseModule } from 'ag-grid-enterprise'
 import { useTaskData, type Task } from '@/hooks/useTaskData'
@@ -33,7 +28,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, AlertCircle, SlidersHorizontal, PlayCircle } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { ChevronDown, AlertCircle, SlidersHorizontal, PlayCircle, Rows3, Rows4, AlignJustify } from 'lucide-react'
 import { useMemo, useRef, useEffect, useCallback, useState } from 'react'
 import { TaskDetailsPanel } from './TaskDetailsPanel'
 import { StatusChips } from '@/components/shared/StatusChips'
@@ -44,6 +44,14 @@ import { getViewName } from '@/constants/statusColors'
 
 // Register AG Grid modules once at module level
 ModuleRegistry.registerModules([AllCommunityModule, AllEnterpriseModule])
+
+type DensityMode = 'compact' | 'default' | 'comfortable'
+
+const DENSITY_CONFIG: Record<DensityMode, { rowHeight: number; icon: typeof Rows3; label: string }> = {
+  compact: { rowHeight: 28, icon: AlignJustify, label: 'Compact' },
+  default: { rowHeight: 36, icon: Rows4, label: 'Default' },
+  comfortable: { rowHeight: 44, icon: Rows3, label: 'Comfortable' },
+}
 
 /** Resize handle rendered on the left edge of the details panel */
 function ResizeHandle({
@@ -86,6 +94,8 @@ export function TaskManager() {
   const [searchValue, setSearchValue] = useState('')
   const [isFiltersPanelOpen, setIsFiltersPanelOpen] = useState(false)
   const [selectedRowCount, setSelectedRowCount] = useState(0)
+  const [density, setDensity] = useState<DensityMode>('default')
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
 
   // Task details panel state
   const {
@@ -99,13 +109,13 @@ export function TaskManager() {
     toggleExpand,
   } = useTaskDetails()
 
-  // Panel resize
+  // Panel resize — responsive default (smaller on tablet)
   const {
     width: panelWidth,
     isResizing,
     handleResizeStart,
     handleTouchResizeStart,
-  } = useResizable({ defaultWidth: 480, minWidth: 400, maxWidthOffset: 300 })
+  } = useResizable({ defaultWidth: 460, minWidth: 380, maxWidthOffset: 300 })
 
   // Handle search input change and apply quick filter
   const handleSearchChange = (value: string) => {
@@ -128,6 +138,54 @@ export function TaskManager() {
       setSelectedRowCount(selected.length)
     }
   }, [])
+
+  // Status filter: external filter for AG Grid
+  const isExternalFilterPresent = useCallback((_params: IsExternalFilterPresentParams) => {
+    return statusFilter !== null
+  }, [statusFilter])
+
+  const doesExternalFilterPass = useCallback((node: { data: Task | undefined }) => {
+    if (!statusFilter) return true
+    return node.data?.dueStatus?.toUpperCase() === statusFilter
+  }, [statusFilter])
+
+  // When status filter changes, refresh grid
+  useEffect(() => {
+    if (gridRef.current?.api) {
+      gridRef.current.api.onFilterChanged()
+    }
+  }, [statusFilter])
+
+  // Handle status chip click
+  const handleStatusFilterClick = useCallback((filter: string | null) => {
+    setStatusFilter(filter)
+  }, [])
+
+  // Cycle density mode
+  const cycleDensity = useCallback(() => {
+    const modes: DensityMode[] = ['compact', 'default', 'comfortable']
+    const currentIdx = modes.indexOf(density)
+    setDensity(modes[(currentIdx + 1) % modes.length])
+  }, [density])
+
+  // Update grid row height when density changes
+  useEffect(() => {
+    if (gridRef.current?.api) {
+      gridRef.current.api.resetRowHeights()
+    }
+  }, [density])
+
+  // Row class rules for visual encoding by due status
+  const rowClassRules = useMemo(() => ({
+    'border-l-[3px] border-l-red-500': (params: RowClassParams<Task>) =>
+      params.data?.dueStatus?.toUpperCase() === 'OVERDUE',
+    'border-l-[3px] border-l-amber-500': (params: RowClassParams<Task>) =>
+      params.data?.dueStatus?.toUpperCase() === 'TODAY',
+    'border-l-[3px] border-l-emerald-500': (params: RowClassParams<Task>) =>
+      params.data?.dueStatus?.toUpperCase() === 'UPCOMING',
+    'border-l-[3px] border-l-purple-500': (params: RowClassParams<Task>) =>
+      params.data?.dueStatus?.toUpperCase() === 'COMPLETED',
+  }), [])
 
   // Grid options
   const gridOptions = useMemo(() => ({
@@ -159,7 +217,7 @@ export function TaskManager() {
         },
       ],
     },
-  }), [handleRowClicked])
+  }), [handleRowClicked, handleSelectionChanged])
 
   // Auto-open filters panel when ?hierarchy=true is in URL
   useEffect(() => {
@@ -185,7 +243,6 @@ export function TaskManager() {
       const selectedControlType = searchParams.get('controlType') || ''
       const selectedControlName = searchParams.get('controlName') || ''
 
-      // Apply controlType filter (agTextColumnFilter model format)
       const controlTypeFilter = await gridRef.current.api.getColumnFilterInstance('controlType')
       if (controlTypeFilter) {
         controlTypeFilter.setModel(
@@ -193,7 +250,6 @@ export function TaskManager() {
         )
       }
 
-      // Apply controlName filter (agTextColumnFilter model format)
       const controlNameFilter = await gridRef.current.api.getColumnFilterInstance('controlName')
       if (controlNameFilter) {
         controlNameFilter.setModel(
@@ -207,13 +263,14 @@ export function TaskManager() {
     applyHierarchyFilters()
   }, [location.search])
 
-  // Check if hierarchy filter is active (for visual indicator)
-  const searchParams = new URLSearchParams(location.search)
-  const hasHierarchyFilter = searchParams.has('controlType') || searchParams.has('controlName')
+  // Check if hierarchy filter is active
+  const urlSearchParams = new URLSearchParams(location.search)
+  const hasHierarchyFilter = urlSearchParams.has('controlType') || urlSearchParams.has('controlName')
+
+  const DensityIcon = DENSITY_CONFIG[density].icon
 
   return (
     <div className="h-full w-full flex flex-col">
-      {/* Page Header: [Filters] [View Name] [Status Chips] ... [Search] [Actions] */}
       <PageHeader
         subtitle={viewName}
         leading={
@@ -221,7 +278,7 @@ export function TaskManager() {
             variant="outline"
             size="sm"
             className={cn(
-              'h-7 gap-1.5 text-[11px] font-medium px-2.5',
+              'h-7 gap-1.5 font-medium px-2.5',
               hasHierarchyFilter && 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20'
             )}
             onClick={() => setIsFiltersPanelOpen(!isFiltersPanelOpen)}
@@ -233,10 +290,16 @@ export function TaskManager() {
             )}
           </Button>
         }
-        center={<StatusChips tasks={tasks} />}
+        center={
+          <StatusChips
+            tasks={tasks}
+            activeFilter={statusFilter}
+            onFilterClick={handleStatusFilterClick}
+          />
+        }
       >
         {/* Search */}
-        <div className="w-52">
+        <div className="w-44 desktop:w-52">
           <SearchInput
             value={searchValue}
             onChange={handleSearchChange}
@@ -244,20 +307,38 @@ export function TaskManager() {
           />
         </div>
 
+        {/* Density Toggle */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={cycleDensity}
+            >
+              <DensityIcon className="h-3.5 w-3.5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            Density: {DENSITY_CONFIG[density].label}
+          </TooltipContent>
+        </Tooltip>
+
         {/* Separator */}
         <div className="w-px h-4 bg-border" />
 
-        {/* Initiate Review Button — enabled when rows are checked */}
+        {/* Initiate Review Button */}
         <Button
           variant="default"
           size="sm"
-          className="h-7 gap-1.5 text-[11px] font-medium px-3"
+          className="h-7 gap-1.5 font-medium px-3"
           disabled={selectedRowCount === 0}
         >
           <PlayCircle className="h-3.5 w-3.5" />
-          Initiate Review
+          <span className="hidden desktop:inline">Initiate Review</span>
+          <span className="desktop:hidden">Review</span>
           {selectedRowCount > 0 && (
-            <span className="ml-0.5 text-[10px] font-bold bg-white/20 rounded px-1 min-w-[18px] text-center">
+            <span className="ml-0.5 text-caption font-bold bg-white/20 rounded px-1 min-w-[18px] text-center">
               {selectedRowCount}
             </span>
           )}
@@ -266,7 +347,7 @@ export function TaskManager() {
         {/* Actions Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 text-[11px] font-medium px-2.5 gap-1">
+            <Button variant="outline" size="sm" className="h-7 font-medium px-2.5 gap-1">
               Actions
               <ChevronDown className="h-3 w-3" />
             </Button>
@@ -299,14 +380,14 @@ export function TaskManager() {
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center space-y-3">
                       <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto" />
-                      <p className="text-sm text-muted-foreground">Loading tasks...</p>
+                      <p className="text-body text-muted-foreground">Loading tasks...</p>
                     </div>
                   </div>
                 ) : error ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center space-y-2">
                       <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
-                      <p className="text-sm text-destructive">Error: {error.message}</p>
+                      <p className="text-body text-destructive">Error: {error.message}</p>
                     </div>
                   </div>
                 ) : (
@@ -316,6 +397,10 @@ export function TaskManager() {
                     rowData={tasks}
                     columnDefs={columnDefs}
                     defaultColDef={defaultColDef}
+                    rowHeight={DENSITY_CONFIG[density].rowHeight}
+                    rowClassRules={rowClassRules}
+                    isExternalFilterPresent={isExternalFilterPresent}
+                    doesExternalFilterPass={doesExternalFilterPass}
                     {...gridOptions}
                   />
                 )}
@@ -327,7 +412,7 @@ export function TaskManager() {
           {isPanelOpen && selectedTask && (
             <div
               className={cn(
-                'h-full border-l border-border flex-shrink-0 relative bg-card overflow-hidden',
+                'h-full border-l border-border flex-shrink-0 relative bg-card overflow-hidden animate-slide-in-right',
                 isExpanded && 'flex-1',
                 'transition-all duration-200 ease-out'
               )}

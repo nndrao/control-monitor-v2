@@ -6,6 +6,7 @@
  * Clicking a row filters the main task grid via URL query params.
  *
  * Also contains the task view selector dropdown for switching between views.
+ * Responsive: narrower on tablet, wider on desktop.
  */
 
 import { useMemo, useRef, useCallback } from 'react'
@@ -74,7 +75,7 @@ const taskViewItems = [
 function CountCellRenderer({ value, colorClass }: { value: number; colorClass: string }) {
   if (!value || value === 0) return null
   return (
-    <span className={cn('font-semibold text-[11px]', colorClass)}>
+    <span className={cn('font-semibold text-label', colorClass)}>
       {value}
     </span>
   )
@@ -275,7 +276,7 @@ export function ControlHierarchyPanel({
   return (
     <div
       className={cn(
-        'absolute left-3 top-3 w-[400px] bg-card border border-border rounded-lg flex flex-col overflow-hidden z-20',
+        'absolute left-3 top-3 w-[350px] desktop:w-[400px] bg-card border border-border rounded-lg flex flex-col overflow-hidden z-20',
         'shadow-lg',
         'transition-all duration-200 ease-out',
         isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none',
@@ -289,13 +290,13 @@ export function ControlHierarchyPanel({
           <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center">
             <SlidersHorizontal className="h-3 w-3 text-primary" />
           </div>
-          <span className="text-[13px] font-semibold text-foreground tracking-tight">Filters</span>
+          <span className="text-body font-semibold text-foreground tracking-tight">Filters</span>
         </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground"
           aria-label="Close filters panel"
         >
           <X className="h-3.5 w-3.5" />
@@ -308,17 +309,17 @@ export function ControlHierarchyPanel({
         <div className="p-3 flex-shrink-0">
           <div className="flex items-center gap-1.5 mb-1.5">
             <Eye className="h-3 w-3 text-muted-foreground" />
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Task View</span>
+            <span className="section-label">Task View</span>
           </div>
           <Select value={currentViewPath} onValueChange={handleViewChange}>
-            <SelectTrigger className="w-full h-7 text-[11px]">
+            <SelectTrigger className="w-full h-7 text-xs">
               <SelectValue placeholder="Select view" />
             </SelectTrigger>
             <SelectContent>
               {taskViewItems.map((item) => {
                 const Icon = item.icon
                 return (
-                  <SelectItem key={item.path} value={item.path} className="text-[11px]">
+                  <SelectItem key={item.path} value={item.path} className="text-xs">
                     <div className="flex items-center gap-2">
                       <Icon className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
                       <span>{item.name}</span>
@@ -334,7 +335,7 @@ export function ControlHierarchyPanel({
         <div className="border-t border-border flex flex-col">
           <div className="flex items-center gap-1.5 px-3 py-2 flex-shrink-0 bg-muted/20">
             <Layers className="h-3 w-3 text-muted-foreground" />
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+            <span className="section-label">
               Control Hierarchy
             </span>
             {(selectedControlType || selectedControlName) && (
@@ -345,7 +346,7 @@ export function ControlHierarchyPanel({
                   newParams.delete('controlName')
                   navigate({ pathname: location.pathname, search: newParams.toString() })
                 }}
-                className="ml-auto text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+                className="ml-auto text-label font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 Clear filter
               </button>
@@ -388,19 +389,19 @@ export function ControlHierarchyPanel({
           <div className="px-3 py-2 border-t border-border flex items-center justify-center gap-4 bg-muted/10 flex-shrink-0">
             <div className="flex items-center gap-1.5">
               <div className={cn('w-2 h-2 rounded-full', DUE_STATUS_COLORS.OVERDUE.dot)} />
-              <span className="text-[11px] font-medium text-muted-foreground">Overdue</span>
+              <span className="text-caption font-medium text-muted-foreground">Overdue</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className={cn('w-2 h-2 rounded-full', DUE_STATUS_COLORS.TODAY.dot)} />
-              <span className="text-[11px] font-medium text-muted-foreground">Today</span>
+              <span className="text-caption font-medium text-muted-foreground">Today</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className={cn('w-2 h-2 rounded-full', DUE_STATUS_COLORS.UPCOMING.dot)} />
-              <span className="text-[11px] font-medium text-muted-foreground">Upcoming</span>
+              <span className="text-caption font-medium text-muted-foreground">Upcoming</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-foreground" />
-              <span className="text-[11px] font-medium text-muted-foreground">Total</span>
+              <span className="text-caption font-medium text-muted-foreground">Total</span>
             </div>
           </div>
         </div>

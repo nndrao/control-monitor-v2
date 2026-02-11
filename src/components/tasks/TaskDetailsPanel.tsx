@@ -1,10 +1,9 @@
 /**
  * TaskDetailsPanel Component
  *
- * Master-detail panel container for task details with Notion-inspired design.
- * Shows a clean header with title, status badges, and metadata.
- * Below header: tab-based navigation for different content sections.
- * Supports expand/collapse functionality for responsive layout.
+ * Consistent padding across all header rows (px-5).
+ * Slide-in animation via parent container.
+ * Standardized icon button sizes (h-7 w-7).
  */
 
 import { cn } from '@/lib/utils'
@@ -28,9 +27,6 @@ interface TaskDetailsPanelProps {
   className?: string
 }
 
-/**
- * Format date for display
- */
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
   try {
@@ -64,13 +60,13 @@ export function TaskDetailsPanel({
         className
       )}
     >
-      {/* Panel Header — clean visual hierarchy */}
+      {/* Panel Header — consistent px-5 py-3 across all rows */}
       <div className="flex flex-col border-b border-border flex-shrink-0 bg-background">
         {/* Row 1: Title + window controls */}
-        <div className="flex items-start justify-between gap-3 px-6 pt-4 pb-2">
+        <div className="flex items-start justify-between gap-3 px-5 pt-3 pb-2">
           <div className="flex-1 min-w-0">
             <h2
-              className="text-base font-semibold text-foreground leading-snug tracking-tight"
+              className="text-subhead font-semibold text-foreground leading-snug tracking-tight"
               title={task.title}
             >
               {task.title}
@@ -80,9 +76,9 @@ export function TaskDetailsPanel({
             {onToggleExpand && (
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={onToggleExpand}
-                className="text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                 aria-label={isExpanded ? 'Collapse panel' : 'Expand panel'}
               >
                 {isExpanded ? (
@@ -94,9 +90,9 @@ export function TaskDetailsPanel({
             )}
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={onClose}
-              className="text-muted-foreground hover:text-foreground"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
               aria-label="Close panel"
             >
               <X className="h-4 w-4" />
@@ -104,15 +100,15 @@ export function TaskDetailsPanel({
           </div>
         </div>
 
-        {/* Row 2: Status badges — subtle, inline */}
-        <div className="px-6 pb-2 flex flex-wrap items-center gap-2">
+        {/* Row 2: Status badges */}
+        <div className="px-5 pb-2 flex flex-wrap items-center gap-2">
           <StatusBadge status={task.status} />
           <PriorityBadge priority={task.priority} />
           {task.dueStatus && <DueStatusBadge dueStatus={task.dueStatus} />}
         </div>
 
-        {/* Row 3: Metadata — text-xs text-muted-foreground */}
-        <div className="px-6 pb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+        {/* Row 3: Metadata */}
+        <div className="px-5 pb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-label text-muted-foreground">
           <span className="font-medium">{task.controlName}</span>
           <span className="text-border">·</span>
           <span>{task.controlType}</span>
@@ -128,6 +124,7 @@ export function TaskDetailsPanel({
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-4 w-2/3" />
           </div>
         </div>
       ) : taskDetails ? (
@@ -141,7 +138,7 @@ export function TaskDetailsPanel({
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-body text-muted-foreground">
             Unable to load task details
           </p>
         </div>
